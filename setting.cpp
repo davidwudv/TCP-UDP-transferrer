@@ -153,56 +153,56 @@ void Setting::load(const QString& section, const QString& prefix, QComboBox& cmb
 
 
 //---------add by davidWu 2013/12/31---------
-void Setting::save()
-{
-    QSettings& store = storage();
-    store.beginWriteArray("WhiteIPList");
-    store.remove("");
-    for(int i = 0; i < TransferSkt::WhiteIPList.size(); ++i)
-    {
-        store.setArrayIndex(i);
-        store.setValue("IPAddress", TransferSkt::WhiteIPList[i]);
-    }
-    store.endArray();
+//void Setting::save()
+//{
+//    QSettings& store = storage();
+//    store.beginWriteArray("WhiteIPList");
+//    store.remove("");
+//    for(int i = 0; i < TransferSkt::WhiteIPList.size(); ++i)
+//    {
+//        store.setArrayIndex(i);
+//        store.setValue("IPAddress", TransferSkt::WhiteIPList[i]);
+//    }
+//    store.endArray();
 
-    store.beginWriteArray("TransferMap");
-    store.remove("");
-    for(int i = 0; i < TransferSkt::TransferMap.size(); ++i)
-    {
-        store.setArrayIndex(i);
-        store.setValue("srcAddress", TransferSkt::TransferMap[i].srcHost.IPAddress);
-        store.setValue("srcPort", TransferSkt::TransferMap[i].srcHost.Port);
-        store.setValue("dstAddress", TransferSkt::TransferMap[i].dstHost.IPAddress);
-        store.setValue("dstPort", TransferSkt::TransferMap[i].dstHost.Port);
-    }
-    store.endArray();
-}
+//    store.beginWriteArray("TransferMap");
+//    store.remove("");
+//    for(int i = 0; i < TransferSkt::TransferMap.size(); ++i)
+//    {
+//        store.setArrayIndex(i);
+//        store.setValue("srcAddress", TransferSkt::TransferMap[i].srcHost.IPAddress);
+//        store.setValue("srcPort", TransferSkt::TransferMap[i].srcHost.Port);
+//        store.setValue("dstAddress", TransferSkt::TransferMap[i].dstHost.IPAddress);
+//        store.setValue("dstPort", TransferSkt::TransferMap[i].dstHost.Port);
+//    }
+//    store.endArray();
+//}
 
-void Setting::load()
-{
-    QSettings& store = storage();
-    int size = store.beginReadArray("WhiteIPList");
-    TransferSkt::WhiteIPList.clear();
-    for(int i = 0; i < size; ++i)
-    {
-        store.setArrayIndex(i);
-        QString item = store.value("IPAddress").toString();
-        TransferSkt::WhiteIPList.push_back(item);
-    }
-    store.endArray();
+//void Setting::load()
+//{
+//    QSettings& store = storage();
+//    int size = store.beginReadArray("WhiteIPList");
+//    TransferSkt::WhiteIPList.clear();
+//    for(int i = 0; i < size; ++i)
+//    {
+//        store.setArrayIndex(i);
+//        QString item = store.value("IPAddress").toString();
+//        TransferSkt::WhiteIPList.push_back(item);
+//    }
+//    store.endArray();
 
-    size = store.beginReadArray("TransferMap");
-    TransferSkt::TransferMap.clear();
-    for(int i = 0; i < size; ++i)
-    {
-        store.setArrayIndex(i);
-        TransferInfo hostInfo;
-        hostInfo.srcHost.IPAddress = store.value("srcAddress").toString();
-        hostInfo.srcHost.Port = store.value("srcPort").toUInt();
-        hostInfo.dstHost.IPAddress = store.value("dstAddress").toString();
-        hostInfo.dstHost.Port = store.value("dstPort").toUInt();
-        TransferSkt::TransferMap.push_back(hostInfo);
-    }
-    store.endArray();;
-}
+//    size = store.beginReadArray("TransferMap");
+//    TransferSkt::TransferMap.clear();
+//    for(int i = 0; i < size; ++i)
+//    {
+//        store.setArrayIndex(i);
+//        TransferInfo hostInfo;
+//        hostInfo.srcHost.IPAddress = store.value("srcAddress").toString();
+//        hostInfo.srcHost.Port = store.value("srcPort").toUInt();
+//        hostInfo.dstHost.IPAddress = store.value("dstAddress").toString();
+//        hostInfo.dstHost.Port = store.value("dstPort").toUInt();
+//        TransferSkt::TransferMap.push_back(hostInfo);
+//    }
+//    store.endArray();;
+//}
 //---------end---------

@@ -1,5 +1,5 @@
-﻿<RCC>
+<RCC>
     <qresource prefix="/">
-        <file>sokit.png</file>
+        <file>transfer.png</file>
     </qresource>
 </RCC>

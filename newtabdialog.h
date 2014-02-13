@@ -2,7 +2,7 @@
 #define CREATENEWTABDIALOG_H
 
 #include <QDialog>
-#include "ui_CreateNewTabDialog.h"
+#include "ui_NewTabDialog.h"
 
 class NewTabDialog : public QDialog
 {
@@ -10,11 +10,7 @@ class NewTabDialog : public QDialog
 public:
     explicit NewTabDialog(QWidget *parent = 0);
     ~NewTabDialog();
-    enum ClickedResult
-    {
-        OK,
-        Cancel
-    };
+    QString &GetNewTabName() { return newTabName; }
 
 signals:
 
@@ -22,9 +18,11 @@ public slots:
     void OKButtonClicked();
     void CancelButtonClicked();
 
+public:
+    enum ClickedResult { OK, Cancel };
 private:
-    QString nameOfNewTab;
-    Ui::CreateNewTabDialog *dialog;
+    QString newTabName;
+    Ui::NewTabDialog *dialog;
 
 };
 

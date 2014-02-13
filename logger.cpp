@@ -9,17 +9,24 @@
 #include "toolkit.h"
 #include "setting.h"
 #include "logger.h"
+#include <QThread>
 
 #define SET_MAX_LOGITM  100
 #define SET_MAX_LOGTRM  30
 
 Logger::Logger(QObject *parent)
-: QObject(parent),m_chkWrite(0),m_treeOut(0),m_textOut(0)
+: QObject(parent),m_chkWrite(0),m_treeOut(0),m_textOut(0) , clearLogTimer(new QTimer(this))
 {
+    connect(clearLogTimer, SIGNAL(timeout()), this, SLOT(checkAndClearLog()));
 }
 
 Logger::~Logger()
 {
+    if(clearLogTimer != nullptr)
+    {
+        clearLogTimer->disconnect(this);
+        delete clearLogTimer;
+    }
 	m_file.close();
 }
 
@@ -54,7 +61,7 @@ void Logger::init(QTreeWidget* o, QCheckBox* w, QPlainTextEdit* d
 
 		QAction* clear = new QAction(tr("Clear"), this);
 		clear->setShortcuts(ks);
-		connect(clear, SIGNAL(triggered()), this, SIGNAL(clearLog()));
+        connect(clear, SIGNAL(triggered()), this, SIGNAL(clearLog()));
 
 		QAction* all = new QAction(tr("Select All"), this);
 		all->setShortcuts(QKeySequence::SelectAll);
@@ -114,22 +121,24 @@ void Logger::copy()
 
 const QString Logger::getLogFileName()
 {
-	int i = 0;
-	while (2 > i++)
-	{
-		if (!m_dir.isEmpty())
-		{
-			QDir d;
-			if (d.exists(m_dir) || d.mkpath(m_dir)) {
-				i = 0;
-				break;
-			}
-		}
+//    int i = 0;
+//    while (2 > i++)
+//    {
+//        if (!m_dir.isEmpty())
+//        {
+//            QDir d;
+//            if (d.exists(m_dir) || d.mkpath(m_dir)) {
+//                i = 0;
+//                break;
+//            }
+//        }
 
-        m_dir = Setting::path() + "/" + property(SET_SEC_DIR).toString();
-	}
+//        m_dir = Setting::path() + "/" + property(SET_SEC_DIR).toString();
+//    }
 
-	return (i==2) ? QString() : m_dir + QDir::separator() + 
+    createLogDir();
+
+    return /*(i==2) ? QString() : */m_dir + QDir::separator() +
 		QDate::currentDate().toString("yyyyMMdd.log");
 }
 
@@ -207,6 +216,7 @@ QTreeWidgetItem* Logger::appendLogEntry(QTreeWidgetItem* p, const QString& t)
 void Logger::output(const QString& title, const QString& info)
 {
     QString lab(QTime::currentTime().toString("HH:mm:ss "));
+//    lab = "Thread id: " + QString::number((int)QThread::currentThreadId()) + "  " + lab;
     if(m_chkOutput->isChecked())
     {
         QTreeWidgetItem* it = new QTreeWidgetItem(0);
@@ -224,12 +234,13 @@ void Logger::output(const QString& title, const QString& info)
         lab += '\n';
     }
 
-	writeLogFile(lab);
+    writeLogFile(lab);
 }
 
 void Logger::output(const QString& title, const char* buf, quint32 len)
 {
     QString lab(QTime::currentTime().toString("HH:mm:ss "));
+//    lab = "Thread id: " + QString::number((int)QThread::currentThreadId()) + "  " + lab;
     if(m_chkOutput->isChecked())
     {
         QTextStream out(&lab);
@@ -251,5 +262,54 @@ void Logger::output(const QString& title, const char* buf, quint32 len)
         out << '\n' << hex << '\n' << '\n';
     }
 
-	writeLogFile(lab);
+    writeLogFile(lab);
 }
+
+/*----add by davidWu 2014/2/11----*/
+
+void Logger::checkAndClearLog()
+{
+    if(m_dir.isEmpty())
+    {
+        m_dir = Setting::path() + "/" + property(SET_SEC_DIR).toString();
+    }
+
+    QTimer *timer = (QTimer*)sender();
+    QDir dir(m_dir);
+    QStringList filters;
+    QStringList fileNameList;
+    filters << "*.log";
+    dir.setNameFilters(filters);
+    QFileInfoList fileList = dir.entryInfoList(QDir::Files, QDir::Time);
+
+    if(fileList.count() > 30)
+    {
+        auto iter = fileList.constBegin();
+
+        while(iter != fileList.constEnd())
+        {
+            fileNameList.push_back(iter->fileName());
+            ++iter;
+        }
+        fileNameList.sort(Qt::CaseInsensitive);
+        while(fileNameList.count() > 30)
+        {
+            dir.remove(fileNameList.at(0));
+            fileNameList.removeAt(0);
+        }
+    }
+
+    timer->stop();
+    timer->start(86400000 - QTime::currentTime().msecsSinceStartOfDay());
+}
+
+void Logger::createLogDir()
+{
+    if(m_dir.isEmpty())
+        m_dir = Setting::path() + "/" + property(SET_SEC_DIR).toString();
+    QDir dir;
+    if(!dir.exists(m_dir))
+        dir.mkpath(m_dir);
+}
+
+/*----end----*/

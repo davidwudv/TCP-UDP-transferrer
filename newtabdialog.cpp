@@ -1,7 +1,7 @@
 ﻿#include "newtabdialog.h"
 
 NewTabDialog::NewTabDialog(QWidget *parent) :
-    QDialog(parent)
+    QDialog(parent), dialog(new Ui::NewTabDialog)
 {
     dialog->setupUi(this);
     connect(dialog->OKButton, SIGNAL(clicked()), this, SLOT(OKButtonClicked()));
@@ -15,7 +15,7 @@ NewTabDialog::~NewTabDialog()
 
 void NewTabDialog::OKButtonClicked()
 {
-    nameOfNewTab = dialog->lineEdit->text();
+    newTabName = dialog->lineEdit->text();
     done(ClickedResult::OK);
 }
 

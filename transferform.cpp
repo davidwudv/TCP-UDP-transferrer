@@ -4,6 +4,7 @@
 #include "transferform.h"
 
 #include <QShortcut>
+#include <QMessageBox>
 
 #define SET_SEC_TRANS  "transfer"
 #define SET_KEY_TRANS  "/transfer"
@@ -21,94 +22,84 @@
 #define WHITE_LIST_RANGE 20  //白名单IP上限数
 //---------end---------
 
-TransferForm::TransferForm(QWidget *parent, Qt::WindowFlags flags)
-: BaseForm(parent, flags)//,m_server(0)
+TransferForm::TransferForm(QString title, QWidget *parent, Qt::WindowFlags flags)
+: BaseForm(parent, flags),m_server(NULL), isRunning(false), tabTitle(title)
 {
 	m_ui.setupUi(this);
+    initConfig();
 }
 
 TransferForm::~TransferForm()
 {
-//	if (m_server && lock(1000))
-//	{
-//		m_server->disconnect(this);
-//		delete m_server;
-//		m_server = NULL;
-
-//		unlock();
-//	}
-
-    //------davidWu 2013/12/31
-    if(lock(1000))
+    if (m_server && lock(1000))
     {
-        TransferSkt *skt;
-        while(sktList.size() > 0)
-        {
-            skt = sktList.first();
-            if(skt)
-            {
-                skt->stop();
-                skt->disconnect(this);
-                delete skt;
-                sktList.removeFirst();
-            }
-        }
+        m_server->disconnect(this);
+        m_server->deleteLater();
+        m_server = NULL;
         unlock();
     }
+
+    //------davidWu 2013/12/31
+//    if(lock(1000))
+//    {
+//        TransferSkt *skt;
+//        while(sktList.size() > 0)
+//        {
+//            skt = sktList.first();
+//            if(skt)
+//            {
+//                skt->stop();
+//                skt->disconnect(this);
+//                delete skt;
+//                sktList.removeFirst();
+//            }
+//        }
+//        unlock();
+//    }
     //end
 
-	saveConfig();
+//	saveConfig();
 }
 
 void TransferForm::initConfig()
 {
-	QString sst(SET_SEC_TRANS);
-    Setting::load(sst+SET_KEY_CMBSA, SET_PFX_CMBITM, *m_ui.cmbSrcAddr, false);
-    Setting::load(sst+SET_KEY_CMBDA, SET_PFX_CMBITM, *m_ui.cmbDstAddr);
-    Setting::load(sst+SET_KEY_CMBSP, SET_PFX_CMBITM, *m_ui.cmbSrcPort);
-    Setting::load(sst+SET_KEY_CMBDP, SET_PFX_CMBITM, *m_ui.cmbDstPort);
+//	QString sst(SET_SEC_TRANS);
+//    Setting::load(sst+SET_KEY_CMBSA, SET_PFX_CMBITM, *m_ui.cmbSrcAddr, false);
+//    Setting::load(sst+SET_KEY_CMBDA, SET_PFX_CMBITM, *m_ui.cmbDstAddr);
+//    Setting::load(sst+SET_KEY_CMBSP, SET_PFX_CMBITM, *m_ui.cmbSrcPort);
+//    Setting::load(sst+SET_KEY_CMBDP, SET_PFX_CMBITM, *m_ui.cmbDstPort);
     //---------add by daivdWu 2013/12/31---------
-    Setting::load();
-    QStringList::iterator it = TransferSkt::WhiteIPList.begin();
-    for(; it != TransferSkt::WhiteIPList.end(); ++it)
-    {
-        m_ui.lstWhiteList->addItem(*it);
-    }
-
-    QList<TransferInfo>::iterator iter = TransferSkt::TransferMap.begin();
-    for(; iter != TransferSkt::TransferMap.end(); ++iter)
-    {
-        QString item(iter->srcHost.IPAddress);
-        item += ": ";
-        item += QString::number(iter->srcHost.Port);
-        item += "--->";
-        item += iter->dstHost.IPAddress;
-        item += ": ";
-        item += QString::number(iter->dstHost.Port);
-        m_ui.lstTransferMaps->addItem(item);
-    }
+//    Setting::load();
+//    QStringList::iterator it = TransferSkt::whiteIPList.begin();
+//    for(; it != TransferSkt::whiteIPList.end(); ++it)
+//    {
+//        m_ui.lstWhiteList->addItem(*it);
+//    }
     //---------end---------
 
-	QString skl(SET_SEC_DIR); skl += SET_KEY_LOG;
-	skl = Setting::get(skl, SET_KEY_TRANS, SET_VAL_LGTAN);
-	setProperty(SET_SEC_DIR, skl);
+//    QString skl(SET_SEC_DIR); skl += SET_KEY_LOG;
+//    skl = Setting::get(skl, SET_KEY_TRANS, SET_VAL_LGTAN);
+     //---------add by daivdWu 2014/1/7---------
+    QString savePath("log/" + tabTitle);
+    setProperty(SET_SEC_DIR, savePath);
+    //---------end---------
 
 	TK::initNetworkInterfaces(m_ui.cmbSrcAddr, true);
-	TK::initNetworkInterfaces(m_ui.cmbDstAddr);
+//	TK::initNetworkInterfaces(m_ui.cmbDstAddr);
 }
 
 void TransferForm::saveConfig()
 {
-	QString sst(SET_SEC_TRANS);
-    Setting::save(sst+SET_KEY_CMBSA, SET_PFX_CMBITM, *m_ui.cmbSrcAddr, false);
-	Setting::save(sst+SET_KEY_CMBDA, SET_PFX_CMBITM, *m_ui.cmbDstAddr);
-	Setting::save(sst+SET_KEY_CMBSP, SET_PFX_CMBITM, *m_ui.cmbSrcPort);
-	Setting::save(sst+SET_KEY_CMBDP, SET_PFX_CMBITM, *m_ui.cmbDstPort);
+//	QString sst(SET_SEC_TRANS);
+//    Setting::save(sst+SET_KEY_CMBSA, SET_PFX_CMBITM, *m_ui.cmbSrcAddr, false);
+//	Setting::save(sst+SET_KEY_CMBDA, SET_PFX_CMBITM, *m_ui.cmbDstAddr);
+//	Setting::save(sst+SET_KEY_CMBSP, SET_PFX_CMBITM, *m_ui.cmbSrcPort);
+//	Setting::save(sst+SET_KEY_CMBDP, SET_PFX_CMBITM, *m_ui.cmbDstPort);
     //---------add by daivdWu 2013/12/31---------
-    Setting::save();
+//    Setting::save();
     //---------end---------
 
-	QString skl(SET_SEC_DIR); skl += SET_KEY_LOG;
+    QString skl(SET_SEC_DIR); skl += SET_KEY_LOG;
 	Setting::set(skl, SET_KEY_TRANS, property(SET_SEC_DIR).toString());
 }
 
@@ -129,12 +120,10 @@ bool TransferForm::initForm()
 	connect(m_ui.btnTrigger, SIGNAL(clicked(bool)), this, SLOT(trigger(bool)));
 
     //---------add by davidWu 2013/12/31---------
-    connect(m_ui.btnAddIPMap, SIGNAL(clicked()), this, SLOT(AddTransferMap()));
-    connect(m_ui.btnSelectAllTransferMap, SIGNAL(clicked()), this, SLOT(SelectAllTransferMap()));
-    connect(m_ui.btnTransferMapDel, SIGNAL(clicked()), this, SLOT(DeleteTransferMap()));
     connect(m_ui.btnAddWhiteIP, SIGNAL(clicked()), this, SLOT(AddWhiteIP()));
     connect(m_ui.btnSelectAllWhiteList, SIGNAL(clicked()), this, SLOT(SelectAllWhiteIP()));
     connect(m_ui.btnWhiteListIPDel, SIGNAL(clicked()), this, SLOT(DeleteWhiteIP()));
+    connect(m_ui.checkBox_turnOnWhiteList, SIGNAL(clicked(bool)), this, SLOT(SetWhiteListEnabled(bool)));
 
     QRegExp regExpIP("((2[0-4]\\d|25[0-5]|[01]?\\d\\d?)\\.){3}(2[0-4]\\d|25[0-5]|[01]?\\d\\d?)");
     QRegExp regExpNumber("^[0-9]*$");
@@ -159,95 +148,107 @@ bool TransferForm::initHotkeys()
 
 void TransferForm::kill(QStringList& list)
 {
-//	if (m_server)
-//	{
-//		while (!list.isEmpty())
-//			m_server->kill(list.takeFirst());
-//	}
+    if (m_server)
+    {
+        while (!list.isEmpty())
+            m_server->kill(list.takeFirst());
+    }
 
     //-------davidWu 2013/12/31------
-    for(int i = 0; i < sktList.size(); ++i)
-    {
-        if(sktList[i])
-            while(!list.isEmpty())
-                sktList[i]->kill(list.takeFirst());
-    }
+//    for(int i = 0; i < sktList.size(); ++i)
+//    {
+//        if(sktList[i])
+//            while(!list.isEmpty())
+//                sktList[i]->kill(list.takeFirst());
+//    }
     //--------end--------
 }
 
-//void TransferForm::trigger(bool start)
-//{
-//	if (lock(1000))
-//	{
-//		if (m_server)
-//		{
-//			m_server->stop();
-//			m_server->disconnect(this);
-//			delete m_server;
-//            m_server = NULL;
-//		}
+void TransferForm::trigger(bool start)
+{
+    if(m_ui.cmbDstAddr->currentText().isEmpty() || m_ui.cmbDstPort->currentText().isEmpty() ||
+            m_ui.cmbSrcAddr->currentText().isEmpty() || m_ui.cmbSrcPort->currentText().isEmpty())
+    {
+        m_ui.btnTrigger->setChecked(false);
+        return;
+    }
 
-//		IPAddr sa, da;
-//		if (start)
-//		{
-//			start = TK::popIPAddr(m_ui.cmbSrcAddr, m_ui.cmbSrcPort, sa) &&
-//					TK::popIPAddr(m_ui.cmbDstAddr, m_ui.cmbDstPort, da);
-//		}
+    isRunning = start;
+    if (lock(1000))
+    {
+        if (m_server)
+        {
+            m_server->stop();
+            m_server->disconnect(this);
+            m_server->deleteLater();
+            m_server = NULL;
+        }
 
-//		if (start)
-//		{
-//			QString type = m_ui.cmbType->currentText();
-//			if (type.contains(TK::socketTypeName(true)))
-//				m_server = new TransferSktTcp(this);
-//			else
-//				m_server = new TransferSktUdp(this);
+        IPAddr sa, da;
+        if (start)
+        {
+            start = TK::popIPAddr(m_ui.cmbSrcAddr, m_ui.cmbSrcPort, sa) &&
+                    TK::popIPAddr(m_ui.cmbDstAddr, m_ui.cmbDstPort, da);
+        }
 
-//			if (m_server)
-//			{
-//				connect(m_server, SIGNAL(connOpen(const QString&)), this, SLOT(listerAdd(const QString&)));
-//				connect(m_server, SIGNAL(connClose(const QString&)), this, SLOT(listerRemove(const QString&)));
-//				connect(m_server, SIGNAL(message(const QString&)), this, SIGNAL(output(const QString&)));
-//				connect(m_server, SIGNAL(dumpbin(const QString&,const char*,quint32)), this, SIGNAL(output(const QString&,const char*,quint32)));
-//				connect(m_server, SIGNAL(countRecv(qint32)), this, SLOT(countRecv(qint32)));
-//				connect(m_server, SIGNAL(countSend(qint32)), this, SLOT(countSend(qint32)));
-//				connect(m_server, SIGNAL(stopped()), this, SLOT(stop()));
-				
-//				start = m_server->start(sa.ip, sa.port, da.ip, da.port);
-//				if (!start)
-//				{
-//					m_server->disconnect(this);
-//					delete m_server;
-//					m_server = NULL;
-//				}
-//			}
-//			else
-//			{
-//				start = false;
-//			}
-//		}
+        if (start)
+        {
+            QString type = m_ui.cmbType->currentText();
+            if (type.contains(TK::socketTypeName(true)))
+                m_server = new TransferSktTcp(&whiteIPList, this);
+            else
+                m_server = new TransferSktUdp(&whiteIPList, this);
 
-//		unlock();
-//	}
+            if (m_server)
+            {
+                connect(m_server, SIGNAL(connOpen(const QString&)), this, SLOT(listerAdd(const QString&)));
+                connect(m_server, SIGNAL(connClose(const QString&)), this, SLOT(listerRemove(const QString&)));
+                connect(m_server, SIGNAL(message(const QString&)), this, SIGNAL(output(const QString&)));
+                connect(m_server, SIGNAL(dumpbin(const QString&,const char*,quint32)), this, SIGNAL(output(const QString&,const char*,quint32)));
+                connect(m_server, SIGNAL(countRecv(qint32)), this, SLOT(countRecv(qint32)));
+                connect(m_server, SIGNAL(countSend(qint32)), this, SLOT(countSend(qint32)));
+                connect(m_server, SIGNAL(stopped()), this, SLOT(stop()));
 
-//	m_ui.cmbSrcAddr->setDisabled(start);
-//	m_ui.cmbSrcPort->setDisabled(start);
-//	m_ui.cmbDstAddr->setDisabled(start);
-//	m_ui.cmbDstPort->setDisabled(start);
-//	m_ui.cmbType->setDisabled(start);
-//    m_ui.btnAddIPMap->setDisabled(start);
+                m_server->whiteIPListEnabled = m_ui.checkBox_turnOnWhiteList->isChecked();
+                start = m_server->start(sa.ip, sa.port, da.ip, da.port);
+                if (!start)
+                {
+                    m_server->disconnect(this);
+                    m_server->deleteLater();
+                    m_server = NULL;
+                }
+            }
+            else
+            {
+                start = false;
+            }
+        }
 
-//	if (start)
-//	{
-//		TK::pushIPAddr(m_ui.cmbSrcPort, m_ui.cmbSrcAddr);
-//		TK::pushIPAddr(0, m_ui.cmbDstPort);
-//        m_ui.btnTrigger->setText("Stop");
-//	}
-//	else
-//	{
-//		TK::resetPushBox(m_ui.btnTrigger);
-//        m_ui.btnTrigger->setText("Start");
-//	}
-//}
+        unlock();
+    }
+
+    m_ui.cmbSrcAddr->setDisabled(start);
+    m_ui.cmbSrcPort->setDisabled(start);
+    m_ui.cmbDstAddr->setDisabled(start);
+    m_ui.cmbDstPort->setDisabled(start);
+    m_ui.cmbType->setDisabled(start);
+
+    if (start)
+    {
+        TK::pushIPAddr(m_ui.cmbSrcPort, m_ui.cmbSrcAddr);
+        TK::pushIPAddr(m_ui.cmbDstAddr, m_ui.cmbDstPort);
+        m_ui.btnTrigger->setText("Stop");
+        timer->start(3000);
+        m_logger.clearLogTimer->start(86400000 - QTime::currentTime().msecsSinceStartOfDay());
+    }
+    else
+    {
+        TK::resetPushBox(m_ui.btnTrigger);
+        m_ui.btnTrigger->setText("Start");
+        timer->stop();
+        m_logger.clearLogTimer->stop();
+    }
+}
 
 void TransferForm::stop()
 {
@@ -258,33 +259,33 @@ void TransferForm::send(const QString& data, const QString& dir)
 {
 	bool s2d = dir.startsWith('S');
 
-//	if (m_server &&lock(1000))
-//	{
-//		QStringList list;
-//		listerSelected(list);
+    if (m_server &&lock(1000))
+	{
+		QStringList list;
+		listerSelected(list);
 
-//		while (!list.isEmpty())
-//			m_server->send(list.takeFirst(), s2d, data);
+		while (!list.isEmpty())
+			m_server->send(list.takeFirst(), s2d, data);
 
-//		unlock();
-//	}
+		unlock();
+	}
 
     //-------davidWu 2013/12/31
-    if(lock(1000))
-    {
-        for(int i = 0; i < sktList.size(); ++i)
-        {
-            if(sktList[i])
-            {
-                QStringList list;
-                listerSelected(list);
+//    if(lock(1000))
+//    {
+//        for(int i = 0; i < sktList.size(); ++i)
+//        {
+//            if(sktList[i])
+//            {
+//                QStringList list;
+//                listerSelected(list);
 
-                while (!list.isEmpty())
-                    sktList[i]->send(list.takeFirst(), s2d, data);
-            }
-        }
-        unlock();
-    }
+//                while (!list.isEmpty())
+//                    sktList[i]->send(list.takeFirst(), s2d, data);
+//            }
+//        }
+//        unlock();
+//    }
     //--------end----------
 }
 
@@ -292,7 +293,7 @@ void TransferForm::send(const QString& data, const QString& dir)
 //---------add by davidWu 2013/12/31---------
 void TransferForm::AddWhiteIP()
 {
-    if(TransferSkt::WhiteIPList.size() >= WHITE_LIST_RANGE)
+    if(whiteIPList.size() >= WHITE_LIST_RANGE)
     {
         msgBox.setText(tr("Error: "));
         msgBox.setInformativeText(tr("A maximum of IP address is 20."));
@@ -311,15 +312,17 @@ void TransferForm::AddWhiteIP()
         msgBox.exec();
         return;
     }
-    if(m_ui.lstWhiteList->findItems(IP, Qt::MatchFixedString).size() != 0)
+
+    if(m_ui.lstWhiteList->findItems(IP, Qt::MatchFixedString).size() != 0 && whiteIPList.contains(IP))
     {
         msgBox.setText(tr("Error: "));
         msgBox.setInformativeText(tr("Please don't enter a same IP!!"));
         msgBox.exec();
+        m_ui.cmbWhiteIPAddr->setCurrentText("");
         return;
     }
     m_ui.lstWhiteList->addItem(IP);
-    TransferSkt::WhiteIPList.push_back(IP);
+    whiteIPList.push_back(IP);
     if(m_ui.cmbWhiteIPAddr->findText(IP) < 0)
         m_ui.cmbWhiteIPAddr->addItem(IP);
     m_ui.cmbWhiteIPAddr->setCurrentText("");
@@ -341,164 +344,148 @@ void TransferForm::DeleteWhiteIP()
         QListWidgetItem *item = list[i];
         int index = m_ui.lstWhiteList->row(item);
         m_ui.lstWhiteList->takeItem(index);
-        TransferSkt::WhiteIPList.removeAt(index);
+        whiteIPList.removeAt(index);
     }
 }
 
-void TransferForm::AddTransferMap()
+void TransferForm::SetWhiteListEnabled(bool enable)
 {
-    QString srcIP = m_ui.cmbSrcAddr->currentText();
-    QString dstIP = m_ui.cmbDstAddr->currentText();
-    QString srcPortStr = m_ui.cmbSrcPort->currentText();
-    QString dstPortStr = m_ui.cmbDstPort->currentText();
-
-    if(srcIP.isEmpty() || dstIP.isEmpty() || srcPortStr.isEmpty() || dstPortStr.isEmpty())
-        return;
-    QRegExp regExp("((2[0-4]\\d|25[0-5]|[01]?\\d\\d?)\\.){3}(2[0-4]\\d|25[0-5]|[01]?\\d\\d?)");
-    if(!regExp.exactMatch(srcIP) || !regExp.exactMatch(dstIP))
-    {
-        msgBox.setText(tr("Error: "));
-        msgBox.setInformativeText(tr("Please enter a valid IP address!!"));
-        msgBox.exec();
-        return;
-    }
-    QString str = srcIP + ": " + srcPortStr + "--->" + dstIP + ": " + dstPortStr;
-//    if(m_ui.cmbType->currentIndex() == 0)
-//        str += tr("(TCP)");
-//    else if(m_ui.cmbType->currentIndex() == 1)
-//        str += tr("(UDP)");
-    if(m_ui.lstTransferMaps->findItems(str, Qt::MatchFixedString).size() != 0)
-    {
-        msgBox.setText(tr("Error: "));
-        msgBox.setInformativeText(tr("Please don't enter a same item!!"));
-        msgBox.exec();
-        return;
-    }
-    m_ui.lstTransferMaps->addItem(str);
-    TransferInfo hostInfo;
-    hostInfo.dstHost.IPAddress = m_ui.cmbDstAddr->currentText();
-    hostInfo.dstHost.Port = m_ui.cmbDstPort->currentText().toUShort();
-    hostInfo.srcHost.IPAddress = m_ui.cmbSrcAddr->currentText();
-    hostInfo.srcHost.Port = m_ui.cmbSrcPort->currentText().toUShort();
-    TransferSkt::TransferMap.push_back(hostInfo);
-
-    if(m_ui.cmbSrcAddr->findText(srcIP) < 0)
-        m_ui.cmbSrcAddr->addItem(srcIP);
-    if(m_ui.cmbDstAddr->findText(dstIP) < 0)
-        m_ui.cmbDstAddr->addItem(dstIP);
-    if(m_ui.cmbDstPort->findText(dstPortStr) < 0)
-        m_ui.cmbDstPort->addItem(dstPortStr);
-    if(m_ui.cmbSrcPort->findText(srcPortStr) < 0)
-        m_ui.cmbSrcPort->addItem(srcPortStr);
-    m_ui.cmbSrcAddr->setCurrentText("");
-    m_ui.cmbDstAddr->setCurrentText("");
-    m_ui.cmbDstPort->setCurrentText("");
-    m_ui.cmbSrcPort->setCurrentText("");
-
-    TK::pushIPAddr(m_ui.cmbSrcPort, m_ui.cmbSrcAddr);
-    TK::pushIPAddr(m_ui.cmbDstAddr, m_ui.cmbDstPort);
+    m_ui.tab_whiteList->setEnabled(enable);
+    if(m_server)
+        m_server->whiteIPListEnabled = enable;
 }
 
-void TransferForm::SelectAllTransferMap()
+void TransferForm::Save(QSettings *settings)
 {
-    m_ui.lstTransferMaps->selectAll();
-}
+    QString whiteListString;
+    QString currentItemString;
+    QString allDstAddrItems;
+    QString allSrcPortItems;
+    QString allDstPortItems;
+    QString allWhiteIPItems;
+    int size = whiteIPList.size();
+    int srcPortCount = m_ui.cmbSrcPort->count();
+    int dstAddrCount = m_ui.cmbDstAddr->count();
+    int dstPortCount = m_ui.cmbDstPort->count();
+    int whiteIPCount = m_ui.cmbWhiteIPAddr->count();
+    int outputEnabled = (int)m_ui.CheckBox_Output->checkState();
+    int writeLogEnabled = (int)m_ui.chkLog->checkState();
+    int whiteListEnabled = (int)m_ui.checkBox_turnOnWhiteList->checkState();
 
-void TransferForm::DeleteTransferMap()
-{
-    QList<QListWidgetItem*> list = m_ui.lstTransferMaps->selectedItems();
-    const int size = list.size();
-    if(size == 0)
-        return;
     for(int i = 0; i < size; ++i)
     {
-        QListWidgetItem *item = list[i];
-        int index = m_ui.lstTransferMaps->row(item);
-        m_ui.lstTransferMaps->takeItem(index);
-        TransferSkt::TransferMap.removeAt(index);
+        if(!whiteIPList[i].isEmpty())
+            whiteListString += whiteIPList[i];
+        if(i < size - 1)
+            whiteListString += "|";
     }
+
+    for(int i = 0; i < srcPortCount; ++i)
+    {
+        if(!m_ui.cmbSrcPort->itemText(i).isEmpty())
+            allSrcPortItems += m_ui.cmbSrcPort->itemText(i);
+        if(i < srcPortCount - 1)
+            allSrcPortItems += "|";
+    }
+
+    for(int i = 0; i < dstAddrCount; ++i)
+    {
+        if(!m_ui.cmbDstAddr->itemText(i).isEmpty())
+            allDstAddrItems += m_ui.cmbDstAddr->itemText(i);
+        if(i < dstAddrCount - 1)
+            allDstAddrItems += "|";
+    }
+
+    for(int i = 0; i < dstPortCount; ++i)
+    {
+        if(!m_ui.cmbDstPort->itemText(i).isEmpty())
+            allDstPortItems += m_ui.cmbDstPort->itemText(i);
+        if(i < dstPortCount - 1)
+            allDstPortItems += "|";
+    }
+
+    for(int i = 0; i < whiteIPCount; ++i)
+    {
+        if(!m_ui.cmbWhiteIPAddr->itemText(i).isEmpty())
+            allWhiteIPItems += m_ui.cmbWhiteIPAddr->itemText(i);
+        if(i < whiteIPCount - 1)
+            allWhiteIPItems += "|";
+    }
+
+    if(!m_ui.cmbSrcAddr->currentText().isEmpty() && !m_ui.cmbSrcPort->currentText().isEmpty()
+            && !m_ui.cmbDstAddr->currentText().isEmpty() && !m_ui.cmbDstPort->currentText().isEmpty())
+    {
+        currentItemString = m_ui.cmbSrcAddr->currentText() + "," + m_ui.cmbSrcPort->currentText();
+        currentItemString += "|" + m_ui.cmbDstAddr->currentText() + "," + m_ui.cmbDstPort->currentText();
+    }
+
+    settings->beginGroup(tabTitle);
+//    settings->remove("");
+    settings->setValue("WhiteList", whiteListString);
+    settings->setValue("CurrentItem", currentItemString);
+    settings->setValue("SrcPortItems", allSrcPortItems);
+    settings->setValue("DstAddrItems", allDstAddrItems);
+    settings->setValue("DstPortItems", allDstPortItems);
+    settings->setValue("WhiteIPItems", allWhiteIPItems);
+    settings->setValue("OutputEnabled", outputEnabled);
+    settings->setValue("WriteLogEnabled", writeLogEnabled);
+    settings->setValue("WhiteListEnabled", whiteListEnabled);
+    settings->endGroup();
+
 }
 
-void TransferForm::trigger(bool start)
+void TransferForm::Load(QSettings *settings)
 {
-    if (lock(1000))
+    QString tmpString;
+    int index1(-1), index2(-1);
+
+    whiteIPList.clear();
+    settings->beginGroup(tabTitle);
+    QString whiteListString = settings->value("WhiteList").toString().trimmed();
+    if(!whiteListString.isEmpty())
+        whiteIPList = whiteListString.split('|');
+    tmpString = settings->value("CurrentItem").toString();
+    if(!tmpString.isEmpty())
     {
-        TransferSkt *skt = NULL;
-        while(sktList.size() > 0)
+        index1 = tmpString.indexOf(',');
+        if(index1 > 0)
         {
-            skt = sktList.first();
-            if(skt)
-            {
-                skt->stop();
-                skt->disconnect(this);
-                delete skt;
-                sktList.removeFirst();
-            }
+            m_ui.cmbSrcAddr->setCurrentText(tmpString.left(index1));
+            index2 = tmpString.indexOf('|');
+            if(index2 > 0)
+                m_ui.cmbSrcPort->setCurrentText(tmpString.mid(index1 + 1, index2 - index1 - 1));
         }
-
-        IPAddr sa, da;
-        QList<TransferInfo>::iterator it = TransferSkt::TransferMap.begin();
-        for(; it != TransferSkt::TransferMap.end(); ++it)
+        index1 = tmpString.lastIndexOf(',');
+        if(index1 > 0)
         {
-            if (start)
-            {
-                sa.ip.setAddress(it->srcHost.IPAddress);
-                sa.port = it->srcHost.Port;
-                da.ip.setAddress(it->dstHost.IPAddress);
-                da.port = it->dstHost.Port;
-
-                QString type = m_ui.cmbType->currentText();
-                TransferSkt *server;
-                if (type.contains(TK::socketTypeName(true)))
-                    server = new TransferSktTcp(this);
-                else
-                    server = new TransferSktUdp(this);
-
-                if (server)
-                {
-                    connect(server, SIGNAL(connOpen(const QString&)), this, SLOT(listerAdd(const QString&)));
-                    connect(server, SIGNAL(connClose(const QString&)), this, SLOT(listerRemove(const QString&)));
-                    connect(server, SIGNAL(message(const QString&)), this, SIGNAL(output(const QString&)));
-                    connect(server, SIGNAL(dumpbin(const QString&,const char*,quint32)), this, SIGNAL(output(const QString&,const char*,quint32)));
-                    connect(server, SIGNAL(countRecv(qint32)), this, SLOT(countRecv(qint32)));
-                    connect(server, SIGNAL(countSend(qint32)), this, SLOT(countSend(qint32)));
-                    connect(server, SIGNAL(stopped()), this, SLOT(stop()));
-
-                    start = server->start(sa.ip, sa.port, da.ip, da.port);
-                    if (!start)
-                    {
-                        server->disconnect(this);
-                        delete server;
-                    }
-                    sktList.push_back(server);
-                }
-                else
-                    start = false;
-            }
+            m_ui.cmbDstAddr->setCurrentText(tmpString.mid(index2 + 1, index1 - index2 -1));
+            m_ui.cmbDstPort->setCurrentText(tmpString.right(tmpString.length() - index1 - 1));
         }
-        unlock();
     }
 
-    m_ui.cmbSrcAddr->setDisabled(start);
-    m_ui.cmbSrcPort->setDisabled(start);
-    m_ui.cmbDstAddr->setDisabled(start);
-    m_ui.cmbDstPort->setDisabled(start);
-    m_ui.cmbType->setDisabled(start);
-    m_ui.btnAddIPMap->setDisabled(start);
-    m_ui.lstTransferMaps->setDisabled(start);
-    m_ui.btnAddIPMap->setDisabled(start);
-    m_ui.btnSelectAllTransferMap->setDisabled(start);
-    m_ui.btnTransferMapDel->setDisabled(start);
+    if(whiteIPList.size() > 0)
+        m_ui.lstWhiteList->addItems(whiteIPList);
+    QString SrcPortItems = settings->value("SrcPortItems").toString().trimmed();
+    QString DstAddrItems = settings->value("DstAddrItems").toString().trimmed();
+    QString DstPortItems = settings->value("DstPortItems").toString().trimmed();
+    QString WhiteIPItems = settings->value("WhiteIPItems").toString().trimmed();
+    Qt::CheckState outputEnabled = (Qt::CheckState)settings->value("OutputEnabled").toInt();
+    Qt::CheckState writeLogEnabled = (Qt::CheckState)settings->value("WriteLogEnabled").toInt();
+    Qt::CheckState whiteListEnabled = (Qt::CheckState)settings->value("WhiteListEnabled").toInt();
 
-    if (start)
-    {
-        m_ui.btnTrigger->setText("Stop");
-    }
-    else
-    {
-        TK::resetPushBox(m_ui.btnTrigger);
-        m_ui.btnTrigger->setText("Start");
-    }
+    if(!SrcPortItems.isEmpty())
+        m_ui.cmbSrcPort->addItems(SrcPortItems.split('|'));
+    if(!DstAddrItems.isEmpty())
+        m_ui.cmbDstAddr->addItems(DstAddrItems.split('|'));
+    if(!DstPortItems.isEmpty())
+        m_ui.cmbDstPort->addItems(DstPortItems.split('|'));
+    if(!WhiteIPItems.isEmpty())
+        m_ui.cmbWhiteIPAddr->addItems(WhiteIPItems.split("|"));
+    m_ui.CheckBox_Output->setCheckState(outputEnabled);
+    m_ui.chkLog->setCheckState(writeLogEnabled);
+    m_ui.checkBox_turnOnWhiteList->setCheckState(whiteListEnabled);
+    m_ui.tab_whiteList->setEnabled((bool)whiteListEnabled);
+    settings->endGroup();
 }
 
 //---------end---------

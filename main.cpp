@@ -12,8 +12,8 @@
 #define SET_KEY_FTSZ "/font/size"
 
 #define SET_KEY_LANG "/lang"
-#define SET_VAL_LANG "sokit"
-#define SET_VAL_LANX ".lan"
+#define SET_VAL_LANG "transferer_chs"
+#define SET_VAL_LANX ".qm"
 
 extern "C" int __cdecl _purecall(void)
 {
@@ -95,7 +95,7 @@ void Sokit::initFont()
 
 	if (family.isEmpty() || fs.filter(family).isEmpty())
 	{
-		QStringList defs = translate("Sokit", "font").split(";", QString::SkipEmptyParts);
+        QStringList defs = translate("Transfer", "font").split(";", QString::SkipEmptyParts);
 		foreach (QString d, defs)
 		{
 			family = d.section(',', 0, 0).trimmed();
@@ -146,33 +146,40 @@ bool Sokit::initUI()
     connect(k, SIGNAL(activated()), h, SLOT(exec()));
 	connect(t, SIGNAL(activated()), this, SLOT(ontop()));
 
-	m_wnd.setWindowTitle(translate("Sokit", "sokit -- F1 for help"));
-	m_wnd.setWindowIcon(QIcon(":/sokit.png"));
+    m_wnd.InitTab();
 
-	QWidget* pnl = new QWidget(&m_wnd);
-	m_wnd.setCentralWidget(pnl);
+//    m_wnd.setWindowTitle(translate("Sokit", "sokit -- F1 for help"));
+//	m_wnd.setWindowIcon(QIcon(":/sokit.png"));
+
+//	QWidget* pnl = new QWidget(&m_wnd);
+//    m_wnd.setCentralWidget(pnl);
 
 //	BaseForm* server = new ServerForm();
-    BaseForm* transf = new TransferForm(pnl);
+//    BaseForm* transf = new TransferForm();
+//    m_wnd.tabsList.push_back(transf);
 //	BaseForm* client = new ClientForm();
 //	NotepadForm* npd = new NotepadForm();
 
-    QTabWidget* tab = new QTabWidget(pnl);
-    tab->setTabsClosable(true);
+//    QTabWidget* tab = new QTabWidget(pnl);
+//    m_wnd.InitTab(tab);
+//    tab->setTabsClosable(true);
+//    tab->setMovable(true);
 //	tab->addTab(server, server->windowTitle());
-    tab->addTab(transf, transf->windowTitle());
+//    tab->addTab(transf, transf->windowTitle());
 //	tab->addTab(client, client->windowTitle());
 //	tab->addTab(npd, npd->windowTitle());
 //	tab->setCurrentIndex(0);
 
-    QLayout* lay = new QVBoxLayout(pnl);
-    lay->setSpacing(5);
-    lay->setContentsMargins(5, 5, 5, 5);
-    lay->addWidget(tab);
+//    QLayout* lay = new QVBoxLayout(pnl);
+//    lay->setSpacing(5);
+//    lay->setContentsMargins(5, 5, 5, 5);
+//    lay->addWidget(tab);
 
 //	return server->init() && transf->init() &&
 //		client->init() && npd->init();
-    return transf->init();
+//    if(!transf->init())
+//        return false;
+    return true;
 }
 
 void Sokit::ontop()

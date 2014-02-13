@@ -1,7 +1,7 @@
 ﻿#ifndef __SETTING_H__
 #define __SETTING_H__
 
-#define SET_APP_NAME   "sokit"
+#define SET_APP_NAME   "transfer"
 
 #define SET_MAX_CMBITM  10
 #define SET_PFX_CMBITM  "item"
@@ -25,8 +25,8 @@ public:
 	static void flush();
 
     //---------add by davidWu 2013/12/31---------
-    static void save();
-    static void load();
+//    static void save();
+//    static void load();
     //---------end---------
 	
 private:

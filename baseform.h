@@ -5,9 +5,11 @@
 #include "logger.h"
 #include <QToolButton>
 #include <QComboBox>
+#include <QTimer>
 
 class QLabel;
 class QListWidget;
+
 class BaseForm : public QWidget
 {
 	Q_OBJECT
@@ -58,10 +60,12 @@ protected slots:
 
 	void listerAdd(const QString& caption);
 	void listerRemove(const QString& caption);
+    //add by davidWu 2014/2/12
+    void updateCountLabel();
+    //end
 
 private:
-	QMutex m_door;
-	Logger m_logger;
+    QMutex m_door;
 
 	quint32 m_cntRecv;
 	quint32 m_cntSend;
@@ -70,6 +74,13 @@ private:
 	QLabel* m_labSend;
 
 	QListWidget* m_cnlist;
+
+    //add by davidWu 2014/2/12
+protected:
+    Logger m_logger;
+    QTimer *timer;
+    QStringList connectsList;//当前已连接的(IP+Port)列表
+    //end
 };
 
 #endif // __BASEFORM_H__

@@ -5,6 +5,7 @@
 #include <QTreeView>
 #include <QCheckBox>
 #include <QMenu>
+#include <QTimer>
 
 class QTreeWidget;
 class QTreeWidgetItem;
@@ -25,7 +26,7 @@ public:
 	void output(const char* buf, quint32 len);
 
 signals:
-	void clearLog();
+    void clearLog();
 
 public slots:
 	void output(const QString& info);
@@ -52,6 +53,16 @@ private:
     QPlainTextEdit* m_textOut;
     /*----add by davidWu 2014/1/2---*/
     QCheckBox *m_chkOutput;
+    /*---2014/2/11---*/
+public:
+    QTimer *clearLogTimer;
+
+protected slots:
+    void checkAndClearLog();//每天凌晨12点检查&清理日志目录，只保留30天日志
+
+private:
+    void createLogDir();
+    /*------end------*/
 };
 
 #endif // __LOGGER_H__

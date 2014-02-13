@@ -3,19 +3,32 @@
 #include <QMutexLocker>
 #include "toolkit.h"
 #include "transferskt.h"
+#include <QMessageBox>
+#include <QThread>
+#include <QtNetwork/QNetworkInterface>
 
 #define PROP_CONN  "CONN"
 
 #define MAXBUFFER 1024*1024
 
 //add by davidWu 2013/12/31
-QStringList TransferSkt::WhiteIPList;
-QList<TransferInfo> TransferSkt::TransferMap;
+//QStringList TransferSkt::WhiteIPList;
+//QList<TransferInfo> TransferSkt::TransferMap;
 //end
 
-TransferSkt::TransferSkt(QObject *parent)
-: QObject(parent),m_spt(0),m_dpt(0)
+TransferSkt::TransferSkt(QStringList *whiteList, QObject *parent)
+: QObject(parent),m_spt(0),m_dpt(0), whiteIPList(whiteList), whiteIPListEnabled(true)
 {
+    QList<QHostAddress> local_iplst = QNetworkInterface::allAddresses();
+    QList<QHostAddress>::const_iterator begin = local_iplst.constBegin();
+
+    while(begin != local_iplst.constEnd())
+    {
+        QString s = (*begin).toString();
+        QString x = "127.0.0.1";
+        localIPList.push_back((*begin).toString());
+        ++begin;
+    }
 }
 
 TransferSkt::~TransferSkt()
@@ -167,9 +180,10 @@ void TransferSkt::show(const QString& msg)
 	emit message(msg);
 }
 
-TransferSktTcp::TransferSktTcp(QObject *parent)
-:TransferSkt(parent)
+TransferSktTcp::TransferSktTcp(QStringList *whiteIPList, QObject *parent)
+:TransferSkt(whiteIPList, parent)
 {
+
 }
 
 TransferSktTcp::~TransferSktTcp()
@@ -197,14 +211,16 @@ bool TransferSktTcp::close(void* cookie)
 {
 	Conn* conn = (Conn*)cookie;
 	
-	if (conn->src)
-		conn->src->disconnect(this);
+    if (conn->src)
+        conn->src->disconnect(this);
 
-	if (conn->dst)
-		conn->dst->disconnect(this);
+    if (conn->dst)
+        conn->dst->disconnect(this);
 
-	delete conn->src;
-	delete conn->dst;
+    delete conn->src;
+    delete conn->dst;
+//    conn->src->deleteLater();
+//    conn->dst->deleteLater();
 	delete conn;
 
 	return true;
@@ -219,7 +235,7 @@ void TransferSktTcp::close(QObject* obj)
 
 	if (conn->src)
 	{
-		conn->src->disconnect(this);
+        conn->src->disconnect(this);
 
 		if (obj == conn->dst)
 			conn->src->deleteLater();
@@ -227,7 +243,7 @@ void TransferSktTcp::close(QObject* obj)
 
 	if (conn->dst)
 	{
-		conn->dst->disconnect(this);
+        conn->dst->disconnect(this);
 
 		if (obj == conn->src)
 			conn->dst->deleteLater();
@@ -249,7 +265,7 @@ void TransferSktTcp::error()
 void TransferSktTcp::close()
 {
 	m_server.close();
-	m_server.disconnect(this);
+    m_server.disconnect(this);
 }
 
 void TransferSktTcp::newConnection()
@@ -260,13 +276,19 @@ void TransferSktTcp::newConnection()
 	QTcpSocket* src = svr->nextPendingConnection();
     //---------add by davidWu 2013/12/31---------
     //不在白名单内的连接全部拒绝
-    QStringList::iterator begin = TransferSkt::WhiteIPList.begin();
-    QStringList::iterator end = TransferSkt::WhiteIPList.end();
-    if(qFind(begin, end, src->peerAddress().toString()) == end && src->peerAddress().toString() != "127.0.0.1")
+    if(whiteIPListEnabled)
     {
-        src->close();
-        src->deleteLater();
-        return;
+        QStringList::const_iterator begin = whiteIPList->constBegin();
+        QStringList::const_iterator end = whiteIPList->constEnd();
+        QStringList::const_iterator begin2 = localIPList.constBegin();
+        QStringList::const_iterator end2 = localIPList.constEnd();
+
+        if((qFind(begin, end, src->peerAddress().toString()) == end) && (qFind(begin2, end2, src->peerAddress().toString()) == end2))
+        {
+            src->close();
+            src->deleteLater();
+            return;
+        }
     }
     //---------end---------
 	while (src)
@@ -327,50 +349,50 @@ void TransferSktTcp::asynConnection()
 
 void TransferSktTcp::newData()
 {
-	QMutexLocker locker(&m_door);
+    QMutexLocker locker(&m_door);
 
-	QTcpSocket* s = qobject_cast<QTcpSocket*>(sender());
-	if (!s) return;
+    QTcpSocket* s = qobject_cast<QTcpSocket*>(sender());
+    if (!s) return;
 
-	Conn* conn = (Conn*)s->property(PROP_CONN).value<void*>();
-	if (!conn) return;
+    Conn* conn = (Conn*)s->property(PROP_CONN).value<void*>();
+    if (!conn) return;
 
-	QTcpSocket* d = (s == conn->src) ? conn->dst : conn->src;
+    QTcpSocket* d = (s == conn->src) ? conn->dst : conn->src;
 
-	qint64 bufLen = s->bytesAvailable();
-	char* buf = TK::createBuffer(bufLen, MAXBUFFER);
-	if (!buf) return;
+    qint64 bufLen = s->bytesAvailable();
+    char* buf = TK::createBuffer(bufLen, MAXBUFFER);
+    if (!buf) return;
 
-	qint64 readLen, writeLen, ioLen;
+    qint64 readLen, writeLen, ioLen;
 	
-	readLen = 0;
-	ioLen = s->read(buf, bufLen);
-	while (ioLen > 0)
-	{
-		readLen += ioLen;
-		ioLen = s->read(buf+readLen, bufLen-readLen);
-	}
+    readLen = 0;
+    ioLen = s->read(buf, bufLen);
+    while (ioLen > 0)
+    {
+        readLen += ioLen;
+        ioLen = s->read(buf+readLen, bufLen-readLen);
+    }
 
-	if (ioLen >= 0)
-	{
-		recordRecv(readLen);
+    if (ioLen >= 0)
+    {
+        recordRecv(readLen);
 
-		writeLen = 0;
-		ioLen = d->write(buf, readLen);
-		while (ioLen > 0)
-		{
-			writeLen += ioLen;
-			ioLen = d->write(buf+writeLen, readLen-writeLen);
-		}
+        writeLen = 0;
+        ioLen = d->write(buf, readLen);
+        while (ioLen > 0)
+        {
+            writeLen += ioLen;
+            ioLen = d->write(buf+writeLen, readLen-writeLen);
+        }
 
-		if (ioLen >= 0)
-		{
-			recordSend(writeLen);
-			dump(buf, readLen, ((s==conn->src) ? TS2D:TD2S), conn->key);
-		}
-	}
+        if (ioLen >= 0)
+        {
+            recordSend(writeLen);
+            dump(buf, readLen, ((s==conn->src) ? TS2D:TD2S), conn->key);
+        }
+    }
 
-	TK::releaseBuffer(buf);
+    TK::releaseBuffer(buf);
 }
 
 void TransferSktTcp::send(void* cookie, bool s2d, const QByteArray& bin)
@@ -404,8 +426,8 @@ void TransferSktTcp::send(void* cookie, bool s2d, const QByteArray& bin)
 	dump(src, srcLen, (s2d?SS2D:SD2S), conn->key);
 }
 
-TransferSktUdp::TransferSktUdp(QObject *parent)
-:TransferSkt(parent)
+TransferSktUdp::TransferSktUdp(QStringList *whiteList, QObject *parent)
+:TransferSkt(whiteList, parent)
 {
 }
 
@@ -447,10 +469,12 @@ bool TransferSktUdp::close(void* cookie)
 {
 	Conn* conn = (Conn*)cookie;
 	
-	if (conn->dst)
-		conn->dst->disconnect(this);
+    if (conn->dst)
+    {
+        conn->dst->disconnect(this);
+    }
 
-	delete conn->dst;
+    delete conn->dst;
 	delete conn;
 
 	return true;

@@ -10,19 +10,19 @@
 #include <QStringList>
 
 //---------add by davidWu 2013/12/30---------
-struct Host
-{
-    QString IPAddress;
-    quint16 Port;
+//struct Host
+//{
+//    QString IPAddress;
+//    quint16 Port;
 
-    Host():IPAddress("null"), Port(0) { }
-};
+//    Host():IPAddress("null"), Port(0) { }
+//};
 
-struct TransferInfo
-{
-    Host srcHost;
-    Host dstHost;
-};
+//struct TransferInfo
+//{
+//    Host srcHost;
+//    Host dstHost;
+//};
 //---------end---------
 
 class TransferSkt : public QObject
@@ -32,7 +32,7 @@ class TransferSkt : public QObject
 	Q_OBJECT
 
 public:
-	TransferSkt(QObject *parent=0);
+    TransferSkt(QStringList *whiteIPList = NULL, QObject *parent=0);
 	virtual ~TransferSkt();
 
     virtual QString name() const { return "General"; }
@@ -92,8 +92,10 @@ private:
 
     //add by davidWu 2013/12/31
 public:
-    static QStringList WhiteIPList;
-    static QList<TransferInfo> TransferMap;
+    QStringList* whiteIPList;
+    bool whiteIPListEnabled;
+protected:
+    QStringList localIPList;
     //end
 };
 
@@ -109,7 +111,7 @@ class TransferSktTcp : public TransferSkt
 	Q_OBJECT
 
 public:
-	TransferSktTcp(QObject *parent=0);
+    TransferSktTcp(QStringList *whiteIPList = NULL, QObject *parent=0);
 	virtual ~TransferSktTcp();
 
     virtual QString name() const { return "TCP"; }
@@ -146,7 +148,7 @@ class TransferSktUdp : public TransferSkt
 	Q_OBJECT
 
 public:
-	TransferSktUdp(QObject *parent=0);
+    TransferSktUdp(QStringList *whiteIPList = NULL, QObject *parent=0);
 	virtual ~TransferSktUdp();
 
     virtual QString name() const { return "UDP"; }

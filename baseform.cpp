@@ -17,12 +17,19 @@
 #define PROP_TARG "targ"
 
 BaseForm::BaseForm(QWidget* p, Qt::WindowFlags f)
-:QWidget(p, f),m_cntRecv(0),m_cntSend(0),m_labRecv(0),m_labSend(0),m_cnlist(0)
+:QWidget(p, f),m_cntRecv(0),m_cntSend(0),m_labRecv(0),m_labSend(0),m_cnlist(0),
+  timer(new QTimer(this))
 {
+    connect(timer, SIGNAL(timeout()), this, SLOT(updateCountLabel()));
 }
 
 BaseForm::~BaseForm()
 {
+    if(timer != nullptr)
+    {
+        timer->disconnect(this);
+        delete timer;
+    }
 }
 
 bool BaseForm::init()
@@ -30,7 +37,7 @@ bool BaseForm::init()
 	if (!initForm() || !initHotkeys())
 		return false;
 
-	initConfig();
+//	initConfig();
 
 	m_logger.setProperty(SET_SEC_DIR, property(SET_SEC_DIR).toString());
 
@@ -156,7 +163,7 @@ void BaseForm::countRecv(qint32 bytes)
 	else
 		m_cntRecv += bytes;		
 
-	m_labRecv->setText(QString::number(m_cntRecv));
+//	m_labRecv->setText(QString::number(m_cntRecv));
 }
 
 void BaseForm::countSend(qint32 bytes)
@@ -166,7 +173,7 @@ void BaseForm::countSend(qint32 bytes)
 	else
 		m_cntSend += bytes;
 
-	m_labSend->setText(QString::number(m_cntSend));
+//	m_labSend->setText(QString::number(m_cntSend));
 }
 
 void BaseForm::send()
@@ -189,7 +196,7 @@ void BaseForm::clear()
 
 void BaseForm::kill()
 {
-	if (lock(1000))
+    if (lock(100))
 	{
 		QStringList list;
 
@@ -213,18 +220,41 @@ void BaseForm::listerSelected(QStringList& output)
 
 void BaseForm::listerAdd(const QString& caption)
 {
-	listerRemove(caption);
-	m_cnlist->addItem(caption);
+//	listerRemove(caption);
+    //edit by daviwu 2014/2/11
+
+//    m_cnlist->addItem(caption);
+    if(connectsList.indexOf(caption) != -1)
+        return;
+    connectsList.push_back(caption);
+
+    //end
 }
 
 void BaseForm::listerRemove(const QString& caption)
 {
-	qint32 i = m_cnlist->count();
-	while (i--)
-	{
-		QListWidgetItem* itm = m_cnlist->item(i);
-		if (itm && itm->text()==caption)
-			delete m_cnlist->takeItem(i);
-	}
+//	qint32 i = m_cnlist->count();
+//	while (i--)
+//	{
+//		QListWidgetItem* itm = m_cnlist->item(i);
+//        if (itm && itm->text() == caption)
+//			delete m_cnlist->takeItem(i);
+//	}
+    int index = connectsList.indexOf(caption);
+    if(index != -1)
+    {
+        connectsList.removeAt(index);
+    }
 }
 
+//add by davidWu 2014/2/11
+void BaseForm::updateCountLabel()
+{
+    m_labRecv->setText(QString::number(m_cntRecv));
+    m_labSend->setText(QString::number(m_cntSend));
+    m_cnlist->clear();
+    auto iter = connectsList.constBegin();
+    while(iter != connectsList.constEnd())
+        m_cnlist->addItem(*iter++);
+}
+//end

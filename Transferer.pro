@@ -22,7 +22,8 @@ SOURCES += \
     toolkit.cpp \
     transferform.cpp \
     transferskt.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    newtabdialog.cpp
 
 HEADERS  += \
     baseform.h \
@@ -34,14 +35,20 @@ HEADERS  += \
     toolkit.h \
     transferform.h \
     transferskt.h \
-    mainwindow.h
+    mainwindow.h \
+    newtabdialog.h
 
 FORMS    += \
     helpform.ui \
     transferform.ui \
-    MainWindow.ui
+    MainWindow.ui \
+    NewTabDialog.ui
 
 OTHER_FILES +=
 
 RESOURCES += \
     icons.qrc
+
+TRANSLATIONS += transferer_chs.ts
+
+RC_FILE = transfer.rc
