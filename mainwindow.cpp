@@ -13,8 +13,10 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     SaveConfig();
-    delete ui;
-    delete settings;
+    if(ui != nullptr)
+        delete ui;
+    if(settings != nullptr)
+        delete settings;
 }
 
 void MainWindow::AddNewTab()

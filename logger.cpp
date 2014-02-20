@@ -13,21 +13,31 @@
 
 #define SET_MAX_LOGITM  100
 #define SET_MAX_LOGTRM  30
+#define LOGFILE_MAX 7
 
 Logger::Logger(QObject *parent)
-: QObject(parent),m_chkWrite(0),m_treeOut(0),m_textOut(0) , clearLogTimer(new QTimer(this))
+: QObject(parent),m_chkWrite(0),m_treeOut(0),m_textOut(0) , clearLogTimer(new QTimer), updateTimer(new QTimer)
 {
     connect(clearLogTimer, SIGNAL(timeout()), this, SLOT(checkAndClearLog()));
+    connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateOutput()));
 }
 
 Logger::~Logger()
 {
     if(clearLogTimer != nullptr)
     {
-        clearLogTimer->disconnect(this);
+//        clearLogTimer->deleteLater();
+        clearLogTimer->stop();
         delete clearLogTimer;
     }
-	m_file.close();
+    if(updateTimer != nullptr)
+    {
+//        updateTimer->deleteLater();
+        updateTimer->stop();
+        delete updateTimer;
+    }
+
+    m_file.close();
 }
 
 void Logger::init(QTreeWidget* o, QCheckBox* w, QPlainTextEdit* d
@@ -144,15 +154,10 @@ const QString Logger::getLogFileName()
 
 void Logger::writeLogFile(const QString& info)
 {
-	if (!m_chkWrite->isChecked())
-		return;
+    m_file.close();
+    m_file.setFileName(getLogFileName());
 
-	m_file.close();
-	m_file.setFileName(getLogFileName());
-
-	if (m_file.open(QIODevice::Append|
-					QIODevice::WriteOnly|
-					QIODevice::Text))
+    if (m_file.open(QIODevice::Append | QIODevice::WriteOnly | QIODevice::Text))
 	{
 		QByteArray a(info.toUtf8());
 
@@ -165,7 +170,7 @@ void Logger::writeLogFile(const QString& info)
 			n -= w;
 		}
 
-		m_file.close();
+        m_file.close();
 	}
 }
 
@@ -215,54 +220,54 @@ QTreeWidgetItem* Logger::appendLogEntry(QTreeWidgetItem* p, const QString& t)
 
 void Logger::output(const QString& title, const QString& info)
 {
+    if(!m_chkOutput->isChecked() && !m_chkWrite->isChecked())
+        return;
+
     QString lab(QTime::currentTime().toString("HH:mm:ss "));
-//    lab = "Thread id: " + QString::number((int)QThread::currentThreadId()) + "  " + lab;
+    lab.append(title);
+    lab.append(' ');
+    lab.append(info);
+
     if(m_chkOutput->isChecked())
     {
-        QTreeWidgetItem* it = new QTreeWidgetItem(0);
-        if (!it) return;
-
-        lab += title;
-        lab += ' ';
-        lab += info;
-
-        appendLogEntry(0, lab);
-
-        pack();
-
-        lab += '\n';
-        lab += '\n';
+//        QTreeWidgetItem* it = new QTreeWidgetItem(0);
+//        if (!it)
+//            return;
+//        appendLogEntry(0, lab);
+//        pack();
+        logInfor.push_back(lab);
     }
+    lab.append("\r\n");
 
-    writeLogFile(lab);
+    if(m_chkWrite->isChecked())
+        writeLogFile(lab);
 }
 
 void Logger::output(const QString& title, const char* buf, quint32 len)
 {
+    if(!m_chkOutput->isChecked() && !m_chkWrite->isChecked())
+        return;
+
     QString lab(QTime::currentTime().toString("HH:mm:ss "));
-//    lab = "Thread id: " + QString::number((int)QThread::currentThreadId()) + "  " + lab;
+    QTextStream out(&lab);
+
+    out << title << " <" << len << "> " << TK::bin2ascii(buf, len);
+    QString hex = TK::bin2hex(buf, len);
     if(m_chkOutput->isChecked())
     {
-        QTextStream out(&lab);
-
-        out << title
-            << " <" << len << "> "
-            << TK::bin2ascii(buf, len);
-
-        QString hex = TK::bin2hex(buf, len);
-
-        QTreeWidgetItem* it = appendLogEntry(0, lab);
-        if (it)
-        {
-            appendLogEntry(it, hex);
-
-            pack();
-        }
-
-        out << '\n' << hex << '\n' << '\n';
+//        QTreeWidgetItem* it = appendLogEntry(0, lab);
+//        if (it)
+//        {
+//            appendLogEntry(it, hex);
+//            pack();
+//        }
+        QPair<QString, QString> pair(lab, hex);
+        logInforData.push_back(pair);
     }
+    out << "\r\n" << hex << "\r\n" << "\r\n";
 
-    writeLogFile(lab);
+    if(m_chkWrite->isChecked())
+        writeLogFile(lab);
 }
 
 /*----add by davidWu 2014/2/11----*/
@@ -282,7 +287,7 @@ void Logger::checkAndClearLog()
     dir.setNameFilters(filters);
     QFileInfoList fileList = dir.entryInfoList(QDir::Files, QDir::Time);
 
-    if(fileList.count() > 30)
+    if(fileList.count() > LOGFILE_MAX)
     {
         auto iter = fileList.constBegin();
 
@@ -292,7 +297,7 @@ void Logger::checkAndClearLog()
             ++iter;
         }
         fileNameList.sort(Qt::CaseInsensitive);
-        while(fileNameList.count() > 30)
+        while(fileNameList.count() > LOGFILE_MAX)
         {
             dir.remove(fileNameList.at(0));
             fileNameList.removeAt(0);
@@ -310,6 +315,30 @@ void Logger::createLogDir()
     QDir dir;
     if(!dir.exists(m_dir))
         dir.mkpath(m_dir);
+}
+
+void Logger::updateOutput()
+{
+    for(int i = 0; i < logInfor.count(); ++i)
+    {
+        QTreeWidgetItem* it = new QTreeWidgetItem(0);
+        if (!it)
+            return;
+        appendLogEntry(0, logInfor.at(i));
+        pack();
+    }
+
+    for(int i = 0; i < logInforData.count(); ++i)
+    {
+        QTreeWidgetItem* it = appendLogEntry(0, logInforData.at(i).first);
+        if (it)
+        {
+            appendLogEntry(it, logInforData.at(i).second);
+            pack();
+        }
+    }
+    logInfor.clear();
+    logInforData.clear();
 }
 
 /*----end----*/

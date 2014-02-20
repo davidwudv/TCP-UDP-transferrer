@@ -240,6 +240,7 @@ void TransferForm::trigger(bool start)
         m_ui.btnTrigger->setText("Stop");
         timer->start(3000);
         m_logger.clearLogTimer->start(86400000 - QTime::currentTime().msecsSinceStartOfDay());
+        m_logger.updateTimer->start(3000);
     }
     else
     {
@@ -247,6 +248,7 @@ void TransferForm::trigger(bool start)
         m_ui.btnTrigger->setText("Start");
         timer->stop();
         m_logger.clearLogTimer->stop();
+        m_logger.updateTimer->stop();
     }
 }
 

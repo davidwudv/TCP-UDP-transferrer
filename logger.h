@@ -54,11 +54,15 @@ private:
     /*----add by davidWu 2014/1/2---*/
     QCheckBox *m_chkOutput;
     /*---2014/2/11---*/
+    QStringList logInfor;
+    QVector<QPair<QString, QString> > logInforData;
 public:
-    QTimer *clearLogTimer;
+    QTimer *clearLogTimer;//定时检查&清理日志文件
+    QTimer *updateTimer;//定时更行输出面板
 
 protected slots:
-    void checkAndClearLog();//每天凌晨12点检查&清理日志目录，只保留30天日志
+    void checkAndClearLog();//每天凌晨12点检查&清理日志目录，只保留LOGFILE_MAX天日志
+    void updateOutput();//更新输出面板
 
 private:
     void createLogDir();
